@@ -8,8 +8,8 @@
 -export([configure/3]).
 -export([configure_slot/2]).
 -export([get/1]).
--export([clear/1]).
--export([set/1]).
+-export([clear/1, clear/2]).
+-export([set/1, set/2]).
 
 % Callbacks
 -export([init/1]).
@@ -56,7 +56,14 @@ get(Pin) -> gen_server:call(?MODULE, {command, <<(index(Pin)):8, 2:8>>}).
 
 clear(Pin) -> gen_server:call(?MODULE, {command, <<(index(Pin)):8, 3:8>>}).
 
-set(Pin) -> gen_server:call(?MODULE, {command, <<(index(Pin)):8, 4:8>>}).
+clear(Slot, Pin) ->
+    clear(concatenate_pin(Slot, Pin)).
+
+set(Pin) ->
+    gen_server:call(?MODULE, {command, <<(index(Pin)):8, 4:8>>}).
+
+set(Slot, Pin) ->
+    set(concatenate_pin(Slot, Pin)).
 
 
 %--- Callbacks -----------------------------------------------------------------
@@ -85,6 +92,9 @@ code_change(_OldVsn, State, _Extra) -> {ok, State}.
 terminate(_Reason, _State) -> ok.
 
 %--- Internal ------------------------------------------------------------------
+
+concatenate_pin(Slot, Pin) ->
+    list_to_atom(lists:flatten([io_lib:format("~p", [Slot]), "_", io_lib:format("~p", [Pin])])).
 
 index(gpio1_1)    -> 0;
 index(gpio1_2)    -> 1;
