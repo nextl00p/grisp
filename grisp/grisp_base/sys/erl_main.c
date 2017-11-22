@@ -42,6 +42,7 @@
 #include <grisp/pin-config.h>
 #include <grisp/led.h>
 #include <grisp/init.h>
+#include <grisp/eeprom.h>
 
 #define MNT "/media/mmcsd-0-0/"
 #define INI_FILE (MNT "grisp.ini")
@@ -118,6 +119,24 @@ fatal_atexit(void)
   while(1)
     {
     }
+}
+
+uint32_t get_serial()
+{
+  struct grisp_eeprom myeeprom;
+  assert(grisp_eeprom_init() >= 0);
+  assert(grisp_eeprom_get(&myeeprom) == 0);
+  grisp_eeprom_dump(&myeeprom);
+  return myeeprom.serial;
+}
+
+void set_hostname()
+{
+  uint32_t sn;
+  if (strcmp(hostname, "defaulthostname") == 0) {
+    sn = get_serial();
+    sprintf(hostname, "GRISP%lu", sn);
+  }
 }
 
 static int ini_file_handler(void *arg, const char *section, const char *name,
@@ -284,6 +303,7 @@ static void Init(rtems_task_argument arg)
   }
 
   evaluate_ini_file(INI_FILE);
+  set_hostname();
   printf("%s\n", erl_args);
   parse_args(erl_args);
 
